@@ -1,0 +1,149 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                  String         @id @default(auto()) @map("_id") @db.ObjectId
+  fullName            String
+  email               String         @unique
+  password            String
+  gender              String?
+  age                 Int?
+  height              Float?
+  heightUnit          String? // e.g., cm, inches
+  currentWeight       Float?
+  currentWeightUnit   String? // e.g., kg, lbs
+  targetWeight        Float?
+  targetWeightUnit    String? // e.g., kg, lbs
+  dietaryPreferences  String[]
+  dietaryRestrictions String[]
+  goal                String?
+  dailyMeals          String[]
+  fcmToken            String?
+  profileImage        String?
+  bio                 String?
+  role                UserRole       @default(User)
+  status              UserStatus     @default(Active)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  mealPlans           MealPlan[]
+  recipes             Recipe[]
+  bookmarks           Bookmark[]
+  notifyOptions       NotifyOption[]
+
+  @@map("users")
+}
+
+model PendingUser {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  fullName  String
+  password  String
+  otp       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Otp {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  otp       String
+  expiresAt DateTime
+}
+
+model Recipe {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String     @db.ObjectId
+  recipeName  String     @unique
+  duration    Int
+  energy      Int
+  features    String[]
+  equipments  String[]
+  ingredients String[]
+  wyn         String
+  nutrition   String
+  hymi        String
+  recipeImage String
+  youtubeLink String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookmarks   Bookmark[]
+  mealPlans   MealPlan[]
+
+  @@map("recipes")
+}
+
+model Bookmark {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  recipeId  String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@map("bookmarks")
+}
+
+model NotifyOption {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @unique @db.ObjectId
+  mealReminder    Boolean  @default(true)
+  groceryReminder Boolean  @default(true)
+  newRecipes      Boolean  @default(true)
+  weeklySummary   Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notify_options")
+}
+
+model MealPlan {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String @db.ObjectId
+  recipeId String @db.ObjectId
+  fiber        Int
+  fat          Int
+  carb         Int
+  iron         Int
+  protein      Int
+  kcal         Int
+  selectedDate DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe       Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@map("meal_plans")
+}
+
+enum PlanType {
+  breakfast
+  lunch
+  dinner
+  snack
+}
+
+enum UserStatus {
+  Active
+  Blocked
+  Deleted
+}
+
+enum UserRole {
+  User
+  Admin
+}
+
+enum Gender {
+  Male
+  Female
+  Other
+}
